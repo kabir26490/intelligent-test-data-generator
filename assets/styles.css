@@ -20,6 +20,10 @@ body {
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: "Sora", "Avenir Next", "Segoe UI", sans-serif;
   color: var(--text);
@@ -91,6 +95,7 @@ body {
 
 .section {
   padding: 70px 0 10px;
+  scroll-margin-top: 96px;
 }
 
 .hero {
