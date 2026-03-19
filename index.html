@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Intelligent Test Data Generator - Generate realistic QA datasets with computed fields and edge cases." />
+  <title>Intelligent Test Data Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Go to top">
+      <span class="brand-dot"></span>
+      <span>Intelligent Test Data Generator</span>
+    </a>
+    <nav class="nav" aria-label="Primary navigation">
+      <a href="#capabilities">Capabilities</a>
+      <a href="#how">How It Works</a>
+      <a href="#limitations">Limitations</a>
+      <a href="#api">API</a>
+    </nav>
+    <a class="btn btn-ghost" href="https://github.com/kabir26490/intelligent-test-data-generator" target="_blank" rel="noreferrer">GitHub</a>
+  </header>
+
+  <main id="home">
+    <section class="hero section container">
+      <div class="hero-copy">
+        <p class="eyebrow">SPRING BOOT • QA AUTOMATION • DATA GENERATION</p>
+        <h1>Generate test data that reflects real product behavior, not random noise.</h1>
+        <p class="lead">Define schemas, apply computed business rules, and produce edge-case-aware datasets from a single API. Built for QA, backend engineering, and performance testing workflows.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://github.com/kabir26490/intelligent-test-data-generator" target="_blank" rel="noreferrer">View Source</a>
+          <a class="btn btn-secondary" href="#api">Explore API</a>
+        </div>
+        <div class="quick-meta">
+          <span>Java 17</span>
+          <span>Spring Boot 3.2</span>
+          <span>Docker Ready</span>
+          <span>Seeded Reproducibility</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <p class="card-label">Sample Payload</p>
+        <pre><code>{
+  "count": 10,
+  "schema": {
+    "order_id": "uuid",
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "schema": {
+        "price": {"type": "decimal", "min": 10, "max": 200, "decimals": 2},
+        "quantity": {"type": "number", "min": 1, "max": 5}
+      }
+    }
+  },
+  "computedFields": {
+    "subtotal": "sum(items[].price * items[].quantity)",
+    "tax": "subtotal * 0.08",
+    "total": "subtotal + tax"
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="capabilities" class="section container">
+      <div class="section-head">
+        <h2>What You Can Achieve</h2>
+        <p>Designed for production-grade testing pipelines, not one-off mock data scripts.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="panel">
+          <h3>Schema-Driven Generation</h3>
+          <p>Generate nested arrays, bounded numeric ranges, decimals with precision, and canonical identity/contact fields.</p>
+        </article>
+        <article class="panel">
+          <h3>Business Logic Coverage</h3>
+          <p>Apply arithmetic, conditional, and aggregation expressions to mimic real checkout and pricing logic.</p>
+        </article>
+        <article class="panel">
+          <h3>QA Edge Case Injection</h3>
+          <p>Blend normal and edge records in one dataset to validate guardrails and runtime behavior under extremes.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="how" class="section container">
+      <div class="section-head">
+        <h2>How It Works</h2>
+      </div>
+      <div class="timeline">
+        <div class="step">
+          <span>01</span>
+          <div>
+            <h3>Define the schema</h3>
+            <p>Describe each field as a simple faker type or a complex typed definition with constraints.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span>02</span>
+          <div>
+            <h3>Add computed fields</h3>
+            <p>Layer in business-rule expressions for taxes, discounts, shipping, and order-level rollups.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span>03</span>
+          <div>
+            <h3>Enable QA mode</h3>
+            <p>Set edge case ratio and include types to stress your APIs with boundary-aware payloads.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span>04</span>
+          <div>
+            <h3>Generate and validate</h3>
+            <p>Consume JSON output with embedded metadata so your pipeline can separate normal and edge records.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="limitations" class="section container">
+      <div class="section-head">
+        <h2>Current Limitations</h2>
+        <p>Transparent boundaries help teams adopt confidently and prioritize roadmap work.</p>
+      </div>
+      <div class="grid grid-2">
+        <article class="panel panel-warn">
+          <h3>Expression & Modeling Constraints</h3>
+          <ul>
+            <li>No nested expression language or advanced logical operators.</li>
+            <li>No relational cross-dataset constraints (foreign key style links).</li>
+            <li>No custom plugin hooks for generator extensions.</li>
+          </ul>
+        </article>
+        <article class="panel panel-warn">
+          <h3>Platform Constraints</h3>
+          <ul>
+            <li>JSON output only; no direct database write mode.</li>
+            <li>Single locale default (en_US).</li>
+            <li>Synchronous request-response generation model.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="api" class="section container">
+      <div class="section-head">
+        <h2>API & Local Run</h2>
+      </div>
+      <div class="grid grid-2">
+        <article class="panel">
+          <h3>Endpoints</h3>
+          <p><code>POST /api/generate</code> — Generate records from schema payload.</p>
+          <p><code>GET /api/health</code> — Service health check.</p>
+          <h4>Local App URL</h4>
+          <p><a href="http://localhost:8080" target="_blank" rel="noreferrer">http://localhost:8080</a></p>
+        </article>
+        <article class="panel">
+          <h3>Quick Start</h3>
+          <pre><code>mvn clean package
+java -jar target/intelligent-test-data-generator-1.0.0.jar</code></pre>
+          <h4>Docker</h4>
+          <pre><code>docker-compose up --build</code></pre>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p>Built by <a href="https://github.com/kabir26490" target="_blank" rel="noreferrer">kabir26490</a> • Intelligent Test Data Generator</p>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
