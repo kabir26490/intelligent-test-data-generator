@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Intelligent Test Data Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f5f7fa; 
+            padding: 20px; 
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 40px; 
+            text-align: center; 
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        @media (max-width: 1200px) { .grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 20px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        .card h3 { color: #667eea; margin-bottom: 15px; font-size: 1.3em; }
+        .card ul { margin-left: 20px; }
+        .card li { margin: 8px 0; line-height: 1.6; color: #333; }
+        .card.limitation { border-left-color: #f59e0b; }
+        .card.capability { border-left-color: #10b981; }
+        .card h3.limitation { color: #f59e0b; }
+        .card h3.capability { color: #10b981; }
+        
+        .main-content { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
+        @media (max-width: 1200px) { .main-content { grid-template-columns: 1fr; } }
+        
+        .panel { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 25px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .panel h2 { color: #667eea; margin-bottom: 15px; font-size: 1.5em; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        
+        textarea { 
+            width: 100%; 
+            min-height: 400px; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px;
+            resize: vertical;
+        }
+        
+        button { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        
+        .btn-secondary { 
+            background: #e5e7eb; 
+            color: #333;
+            padding: 10px 16px;
+            font-size: 0.9em;
+        }
+        .btn-secondary:hover { background: #d1d5db; }
+        
+        .controls { 
+            margin-top: 15px; 
+            display: flex; 
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.95em;
+            color: #1e40af;
+        }
+        
+        .success { color: #059669; font-weight: 600; }
+        .error { color: #dc2626; font-weight: 600; }
+        
+        .template-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .template-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .template-btn:hover {
+            border-color: #667eea;
+            background: #f3f4f6;
+        }
+        
+        .template-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:hover { color: #667eea; }
+        .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .schema-example {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .badge-capability { background: #d1fae5; color: #065f46; }
+        .badge-limitation { background: #fed7aa; color: #92400e; }
+        .badge-new { background: #dbeafe; color: #0c4a6e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 Intelligent Test Data Generator</h1>
+            <p>QA-aware test data with business rules validation and edge case generation</p>
+        </header>
+
+        <!-- Info Cards -->
+        <div class="grid">
+            <div class="card capability">
+                <h3 class="capability">✅ What You Can Do</h3>
+                <ul>
+                    <li>Generate 1-100,000 realistic records</li>
+                    <li>Create complex nested schemas</li>
+                    <li>Apply business rules dynamically</li>
+                    <li>Auto-generate edge cases</li>
+                    <li>Use seeds for reproducibility</li>
+                    <li>Export as JSON</li>
+                </ul>
+            </div>
+            
+            <div class="card limitation">
+                <h3 class="limitation">⚠️ Limitations</h3>
+                <ul>
+                    <li>No custom Faker logic</li>
+                    <li>Basic expression language only</li>
+                    <li>No relational constraints</li>
+                    <li>No regex pattern matching</li>
+                    <li>No DB integration</li>
+                    <li>Single locale (en_US)</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>📊 Supported Data Types</h3>
+                <ul>
+                    <li><strong>Names:</strong> firstName, lastName, fullName</li>
+                    <li><strong>Contact:</strong> email, phone</li>
+                    <li><strong>Commerce:</strong> productName, companyName</li>
+                    <li><strong>Identifiers:</strong> uuid</li>
+                    <li><strong>Numeric:</strong> number, decimal</li>
+                    <li><strong>Complex:</strong> array, nested objects</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Generator Panel -->
+            <div class="panel">
+                <h2>Data Generator</h2>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('generator')">Generator</button>
+                    <button class="tab-btn" onclick="switchTab('examples')">Schema Examples</button>
+                    <button class="tab-btn" onclick="switchTab('expressions')">Expressions</button>
+                </div>
+
+                <div id="generator" class="tab-content active">
+                    <div class="template-selector">
+                        <button class="template-btn active" onclick="loadTemplate('simple')">Simple Order</button>
+                        <button class="template-btn" onclick="loadTemplate('complex')">Complex Order</button>
+                        <button class="template-btn" onclick="loadTemplate('users')">User Batch</button>
+                        <button class="template-btn" onclick="loadTemplate('products')">Product Catalog</button>
+                    </div>
+                    
+                    <label><strong>Input Schema:</strong></label>
+                    <textarea id="input" placeholder='Enter JSON schema...'></textarea>
+                    
+                    <div class="controls">
+                        <button class="btn-primary" onclick="generate()">🚀 Generate Data</button>
+                        <button class="btn-secondary" onclick="clearInputOutput()">Clear</button>
+                        <button class="btn-secondary" onclick="copyToClipboard('input')">Copy Input</button>
+                        <button class="btn-secondary" onclick="formatJSON('input')">Format</button>
+                    </div>
+                    
+                    <div class="info-box">
+                        💡 <strong>Tip:</strong> Select a template above or paste your own JSON schema. Use computed fields to add derived data and qaMode for edge case generation.
+                    </div>
+                </div>
+
+                <div id="examples" class="tab-content">
+                    <h4 style="margin-bottom: 10px;">Schema Patterns</h4>
+                    
+                    <strong>Simple Field (String Type):</strong>
+                    <div class="schema-example">
+"firstName": "firstname",<br>
+"email": "email",<br>
+"uuid": "uuid"
+                    </div>
+                    
+                    <strong>Number Field:</strong>
+                    <div class="schema-example">
+"age": {"type": "number", "min": 18, "max": 65}
+                    </div>
+                    
+                    <strong>Decimal (Money):</strong>
+                    <div class="schema-example">
+"price": {"type": "decimal", "min": 10.5, "max": 999.99, "decimals": 2}
+                    </div>
+                    
+                    <strong>Nested Array:</strong>
+                    <div class="schema-example">
+"items": {<br>
+&nbsp;"type": "array", "minItems": 1, "maxItems": 5,<br>
+&nbsp;"schema": {"name": "productname", "qty": {"type": "number", "min": 1, "max": 10}}<br>
+}
+                    </div>
+                </div>
+
+                <div id="expressions" class="tab-content">
+                    <h4 style="margin-bottom: 10px;">Business Rule Expressions</h4>
+                    
+                    <strong>Arithmetic:</strong>
+                    <div class="schema-example">
+"doubled_price": "price * 2",<br>
+"discounted": "price * 0.9",<br>
+"total": "subtotal + tax + shipping"
+                    </div>
+                    
+                    <strong>Conditionals:</strong>
+                    <div class="schema-example">
+"shipping": "if(subtotal &gt; 100, 0, 15)",<br>
+"priority": "if(amount &gt; 5000, 'HIGH', 'NORMAL')"
+                    </div>
+                    
+                    <strong>Array Aggregation:</strong>
+                    <div class="schema-example">
+"order_total": "sum(items[].price * items[].quantity)",<br>
+"tax_amount": "sum(items[].tax)"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output & Features Panel -->
+            <div class="panel">
+                <h2>Generated Output</h2>
+                <textarea id="output" readonly placeholder="Generated data will appear here..."></textarea>
+                
+                <div class="controls">
+                    <button class="btn-secondary" onclick="copyToClipboard('output')">Copy Output</button>
+                    <button class="btn-secondary" onclick="downloadJSON()">Download JSON</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">📌 Key Features</h4>
+                    <ul style="list-style: none;">
+                        <li style="margin: 8px 0;">
+                            <span class="badge badge-capability">Reproducible</span>
+                            Use <code>seed</code> parameter for identical results
+                        </li>
+                        <li style="margin: 8px 0;">
+                            <span class="badge badge-capability">QA Metadata</span>
+                            Each record includes validation and type info
+                        </li>
+                        <li style="margin: 8px 0;">
+                            <span class="badge badge-capability">Edge Cases</span>
+                            Automatic min/max boundary testing
+                        </li>
+                        <li style="margin: 8px 0;">
+                            <span class="badge badge-limitation">Limitations</span>
+                            No regex, no DB integration, single locale
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="grid">
+            <div class="card">
+                <h3>🧪 QA Testing</h3>
+                <ul>
+                    <li>Generate test datasets with realistic data</li>
+                    <li>Validate business logic with edge cases</li>
+                    <li>Ensure reproducible test runs</li>
+                    <li>Test data validation rules</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>⚙️ Development</h3>
+                <ul>
+                    <li>Pre-populate dev databases</li>
+                    <li>Create API mock payloads</li>
+                    <li>Test nested data structures</li>
+                    <li>Verify computed field logic</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>📈 Performance & Load Testing</h3>
+                <ul>
+                    <li>Generate up to 100K records</li>
+                    <li>Create consistent bulk data</li>
+                    <li>Test DB performance</li>
+                    <li>Benchmark API throughput</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- API Documentation Link -->
+        <div class="panel" style="margin-top: 30px; background: #f0f9ff; border-left: 4px solid #3b82f6;">
+            <h3 style="color: #1e40af;">📖 API Endpoint</h3>
+            <p><strong>POST</strong> <code>/api/generate</code></p>
+            <p>Send JSON schema with count, schema, computedFields, qaMode, and optional seed. Returns array of generated records with _qa_metadata.</p>
+            <p><strong>Health Check:</strong> <code>GET</code> <code>/api/health</code> → <code>{"status":"UP","version":"1.0.0"}</code></p>
+        </div>
+    </div>
+
+    <script>
+        // Templates
+        const templates = {
+            simple: {
+                "count": 5,
+                "schema": {
+                    "order_id": "uuid",
+                    "customer": "fullName",
+                    "email": "email",
+                    "amount": {"type": "decimal", "min": 50, "max": 500, "decimals": 2}
+                },
+                "computedFields": {
+                    "tax": "amount * 0.08",
+                    "total": "amount + tax"
+                }
+            },
+            complex: {
+                "count": 3,
+                "schema": {
+                    "order_id": "uuid",
+                    "customer": "fullName",
+                    "items": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "schema": {
+                            "product": "productname",
+                            "price": {"type": "decimal", "min": 10, "max": 200, "decimals": 2},
+                            "quantity": {"type": "number", "min": 1, "max": 5}
+                        }
+                    }
+                },
+                "computedFields": {
+                    "subtotal": "sum(items[].price * items[].quantity)",
+                    "tax": "subtotal * 0.08",
+                    "shipping": "if(subtotal > 100, 0, 15)",
+                    "total": "subtotal + tax + shipping"
+                },
+                "qaMode": {
+                    "edgeCases": true,
+                    "edgeCaseRatio": 0.2
+                }
+            },
+            users: {
+                "count": 20,
+                "schema": {
+                    "id": "uuid",
+                    "firstName": "firstname",
+                    "lastName": "lastname",
+                    "email": "email",
+                    "phone": "phone",
+                    "company": "companyname",
+                    "age": {"type": "number", "min": 18, "max": 75}
+                }
+            },
+            products: {
+                "count": 15,
+                "schema": {
+                    "sku": "uuid",
+                    "name": "productname",
+                    "price": {"type": "decimal", "min": 5, "max": 1000, "decimals": 2},
+                    "stock": {"type": "number", "min": 0, "max": 500},
+                    "discount": {"type": "decimal", "min": 0, "max": 0.5, "decimals": 2}
+                },
+                "computedFields": {
+                    "final_price": "price * (1 - discount)"
+                }
+            }
+        };
+
+        function loadTemplate(name) {
+            document.getElementById('input').value = JSON.stringify(templates[name], null, 2);
+            document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function generate() {
+            const input = document.getElementById('input').value;
+            const output = document.getElementById('output');
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: input
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                output.value = JSON.stringify(data, null, 2);
+                
+                // Show success message
+                const msg = document.createElement('div');
+                msg.className = 'info-box success';
+                msg.innerHTML = `✓ Generated ${data.length} record(s) successfully!`;
+                output.parentElement.insertBefore(msg, output);
+                setTimeout(() => msg.remove(), 3000);
+            } catch (e) {
+                output.value = `ERROR: ${e.message}`;
+                output.style.color = 'red';
+            }
+        }
+
+        function clearInputOutput() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('input').style.color = 'black';
+            document.getElementById('output').style.color = 'black';
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).value;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+
+        function formatJSON(elementId) {
+            try {
+                const json = JSON.parse(document.getElementById(elementId).value);
+                document.getElementById(elementId).value = JSON.stringify(json, null, 2);
+            } catch (e) {
+                alert('Invalid JSON: ' + e.message);
+            }
+        }
+
+        function downloadJSON() {
+            const data = document.getElementById('output').value;
+            if (!data) { alert('No data to download'); return; }
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'generated-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Load default template on page load
+        window.addEventListener('load', () => {
+            loadTemplate('simple');
+        });
+    </script>
+</body>
+</html>
