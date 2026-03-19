@@ -373,12 +373,13 @@
                     <div class="controls">
                         <button class="btn-primary" onclick="generate()">🚀 Generate Data</button>
                         <button class="btn-secondary" onclick="clearInputOutput()">Clear</button>
-                        <button class="btn-secondary" onclick="copyToClipboard('input')">Copy Input</button>
+                        <button class="btn-secondary" onclick="copySchema()">Copy Schema</button>
                         <button class="btn-secondary" onclick="formatJSON('input')">Format</button>
+                        <button class="btn-secondary" onclick="convertResponseToSchema()">Output -> Schema</button>
                     </div>
                     
                     <div class="info-box">
-                        💡 <strong>Tip:</strong> Select a template above or paste your own JSON schema. Use computed fields to add derived data and qaMode for edge case generation.
+                        💡 <strong>Tip:</strong> Select a template above or paste your own JSON schema. You can also generate data once, then click <strong>Output -> Schema</strong> to derive a starter schema from sample response JSON.
                     </div>
                 </div>
 
@@ -702,17 +703,19 @@
             }
         };
 
-        function loadTemplate(name) {
+        function loadTemplate(name, buttonElement) {
             document.getElementById('input').value = JSON.stringify(templates[name], null, 2);
             document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            const selectedButton = buttonElement || (window.event && window.event.target) || document.querySelector(`.template-btn[onclick*="${name}"]`);
+            if (selectedButton) selectedButton.classList.add('active');
         }
 
-        function switchTab(tabName) {
+        function switchTab(tabName, buttonElement) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            const selectedButton = buttonElement || (window.event && window.event.target) || document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
+            if (selectedButton) selectedButton.classList.add('active');
         }
 
         async function generate() {
@@ -754,6 +757,149 @@
             navigator.clipboard.writeText(text).then(() => {
                 alert('Copied to clipboard!');
             });
+        }
+
+        function copySchema() {
+            copyToClipboard('input');
+        }
+
+        function convertResponseToSchema() {
+            const outputText = document.getElementById('output').value.trim();
+            if (!outputText || outputText.startsWith('ERROR:')) {
+                alert('Please generate valid output JSON first.');
+                return;
+            }
+
+            try {
+                const sample = JSON.parse(outputText);
+                const conversion = buildSchemaFromSample(sample);
+                document.getElementById('input').value = JSON.stringify(conversion.requestPayload, null, 2);
+                formatJSON('input');
+
+                if (conversion.warnings.length > 0) {
+                    alert('Schema generated with notes:\n- ' + conversion.warnings.join('\n- ') + '\n\nPlease review and adjust manually where needed.');
+                } else {
+                    alert('Schema generated successfully from output sample.');
+                }
+            } catch (e) {
+                alert('Unable to convert output to schema: ' + e.message);
+            }
+        }
+
+        function buildSchemaFromSample(sample) {
+            const warnings = [];
+            let recordSample;
+            let count = 10;
+
+            if (Array.isArray(sample)) {
+                count = sample.length > 0 ? sample.length : 10;
+                if (sample.length === 0 || typeof sample[0] !== 'object' || sample[0] === null) {
+                    throw new Error('Expected output to be an array of objects.');
+                }
+                recordSample = sample[0];
+            } else if (typeof sample === 'object' && sample !== null) {
+                recordSample = sample;
+            } else {
+                throw new Error('Expected output to be a JSON object or array of objects.');
+            }
+
+            const schema = {};
+            for (const [fieldName, value] of Object.entries(recordSample)) {
+                if (fieldName === '_qa_metadata') continue;
+                schema[fieldName] = inferFieldDefinition(value, fieldName, warnings, fieldName);
+            }
+
+            return {
+                warnings,
+                requestPayload: {
+                    count,
+                    schema
+                }
+            };
+        }
+
+        function inferFieldDefinition(value, fieldName, warnings, path) {
+            if (value === null || value === undefined) {
+                warnings.push(`Field ${path} is null/undefined in sample; using generic text generator.`);
+                return 'companyname';
+            }
+
+            if (Array.isArray(value)) {
+                const itemSample = value.find(item => item !== null && item !== undefined);
+                if (itemSample === undefined) {
+                    warnings.push(`Array ${path} is empty in sample; using placeholder item schema.`);
+                    return {
+                        type: 'array',
+                        minItems: 0,
+                        maxItems: 0,
+                        schema: { value: 'companyname' }
+                    };
+                }
+
+                if (typeof itemSample === 'object' && !Array.isArray(itemSample)) {
+                    const itemSchema = {};
+                    for (const [k, v] of Object.entries(itemSample)) {
+                        itemSchema[k] = inferFieldDefinition(v, k, warnings, `${path}[].${k}`);
+                    }
+                    return {
+                        type: 'array',
+                        minItems: value.length || 1,
+                        maxItems: value.length || 1,
+                        schema: itemSchema
+                    };
+                }
+
+                return {
+                    type: 'array',
+                    minItems: value.length || 1,
+                    maxItems: value.length || 1,
+                    schema: {
+                        value: inferFieldDefinition(itemSample, 'value', warnings, `${path}[].value`)
+                    }
+                };
+            }
+
+            if (typeof value === 'number') {
+                if (Number.isInteger(value)) {
+                    return { type: 'number', min: value, max: value };
+                }
+                const decimals = countDecimals(value);
+                return { type: 'decimal', min: value, max: value, decimals };
+            }
+
+            if (typeof value === 'string') {
+                return inferStringType(value, fieldName);
+            }
+
+            if (typeof value === 'boolean') {
+                warnings.push(`Boolean field ${path} is not directly supported by current generator types; using numeric approximation.`);
+                return { type: 'number', min: 0, max: 1 };
+            }
+
+            // Nested object fields are not directly supported as standalone type definitions in this version.
+            warnings.push(`Nested object ${path} is not directly supported; using UUID placeholder.`);
+            return 'uuid';
+        }
+
+        function inferStringType(value, fieldName) {
+            const key = fieldName.toLowerCase();
+
+            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) return 'uuid';
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'email';
+            if (/^[+()\-\s0-9]{7,}$/.test(value)) return 'phone';
+            if (key.includes('firstname') || key.includes('first_name')) return 'firstname';
+            if (key.includes('lastname') || key.includes('last_name')) return 'lastname';
+            if (key.includes('name')) return 'fullName';
+            if (key.includes('company') || key.includes('org')) return 'companyname';
+            if (key.includes('product') || key.includes('item')) return 'productname';
+
+            return 'companyname';
+        }
+
+        function countDecimals(num) {
+            const text = num.toString();
+            if (!text.includes('.')) return 0;
+            return text.split('.')[1].length;
         }
 
         function formatJSON(elementId) {
