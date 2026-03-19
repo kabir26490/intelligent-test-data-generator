@@ -360,6 +360,7 @@
                 
                 <div class="tabs">
                     <button class="tab-btn active" onclick="switchTab('generator')">Generator</button>
+                    <button class="tab-btn" onclick="switchTab('openapi')">OpenAPI Import</button>
                     <button class="tab-btn" onclick="switchTab('examples')">Schema Examples</button>
                     <button class="tab-btn" onclick="switchTab('expressions')">Expressions</button>
                 </div>
@@ -393,6 +394,46 @@
                     
                     <div class="info-box">
                         💡 <strong>Tip:</strong> Use <strong>Output -> Schema</strong> to derive schema from generated output, or use <strong>Sample -> Schema</strong> to derive schema from any external sample response.
+                    </div>
+                </div>
+
+                <div id="openapi" class="tab-content">
+                    <h4 style="margin-bottom: 10px;">📄 Import from OpenAPI / Swagger Spec</h4>
+                    <p style="margin-bottom: 12px; color: #555;">Paste an OpenAPI 3.x (YAML or JSON) spec below, parse it, select the operation you want, and generate the schema automatically.</p>
+
+                    <label><strong>OpenAPI Spec (YAML or JSON):</strong></label>
+                    <textarea id="openapiSpec" class="compact-textarea" style="min-height: 200px;" placeholder='Paste your OpenAPI 3.x spec here (YAML or JSON)...'></textarea>
+
+                    <div class="controls">
+                        <button class="btn-primary" onclick="parseOpenApiSpec()" id="parseSpecBtn">📋 Parse Spec</button>
+                        <button class="btn-secondary" onclick="document.getElementById('openapiFileInput').click()">📁 Upload File</button>
+                        <button class="btn-secondary" onclick="clearOpenApi()">Clear</button>
+                        <input type="file" id="openapiFileInput" accept=".yaml,.yml,.json" style="display:none" onchange="loadOpenApiFile(event)">
+                    </div>
+
+                    <div id="openapiResult" style="display:none; margin-top: 16px;">
+                        <div class="info-box" id="openapiInfo" style="margin-bottom: 12px;"></div>
+
+                        <label><strong>Select Operation:</strong></label>
+                        <select id="openapiOperationSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95em; margin-top: 4px;">
+                        </select>
+
+                        <div style="margin-top: 12px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                            <label><strong>Direction:</strong></label>
+                            <label><input type="radio" name="openapiDirection" value="response" checked> Response Body</label>
+                            <label><input type="radio" name="openapiDirection" value="request"> Request Body</label>
+
+                            <label style="margin-left: 16px;"><strong>Count:</strong></label>
+                            <input type="number" id="openapiCount" value="10" min="1" max="100000" style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+
+                        <div class="controls" style="margin-top: 12px;">
+                            <button class="btn-primary" onclick="generateSchemaFromOpenApi()">🚀 Generate Schema</button>
+                        </div>
+                    </div>
+
+                    <div class="info-box" style="margin-top: 12px;">
+                        💡 <strong>Tip:</strong> Supports OpenAPI 3.0/3.1 specs. The parser resolves all $ref references automatically. After generating the schema, switch to the <strong>Generator</strong> tab to generate data.
                     </div>
                 </div>
 
@@ -979,6 +1020,132 @@
             a.download = 'generated-data.json';
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        // ===== OpenAPI Import Functions =====
+        let cachedSpec = null; // cache parsed spec content to avoid re-sending for schema extraction
+
+        async function parseOpenApiSpec() {
+            const specText = document.getElementById('openapiSpec').value.trim();
+            if (!specText) {
+                alert('Please paste or upload an OpenAPI spec first.');
+                return;
+            }
+
+            const btn = document.getElementById('parseSpecBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Parsing...';
+
+            try {
+                const response = await fetch('/api/openapi/parse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ spec: specText })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    alert('Parse error: ' + (data.error || 'Unknown error'));
+                    return;
+                }
+
+                cachedSpec = specText;
+
+                // Show result panel
+                const resultDiv = document.getElementById('openapiResult');
+                resultDiv.style.display = 'block';
+
+                // Info
+                document.getElementById('openapiInfo').innerHTML =
+                    `<strong>${data.title}</strong> (v${data.version}) — ${data.operationCount} operation(s) found`;
+
+                // Populate dropdown
+                const select = document.getElementById('openapiOperationSelect');
+                select.innerHTML = '';
+                if (data.operations.length === 0) {
+                    select.innerHTML = '<option value="">No operations found</option>';
+                    return;
+                }
+                data.operations.forEach(op => {
+                    const opt = document.createElement('option');
+                    opt.value = op.operationId;
+                    const badges = [];
+                    if (op.hasRequestBody === 'true') badges.push('REQ');
+                    if (op.hasResponseBody === 'true') badges.push('RES');
+                    opt.textContent = `${op.method} ${op.path} — ${op.summary || op.operationId} [${badges.join(',')}]`;
+                    opt.dataset.hasRequest = op.hasRequestBody;
+                    opt.dataset.hasResponse = op.hasResponseBody;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                alert('Failed to parse spec: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📋 Parse Spec';
+            }
+        }
+
+        async function generateSchemaFromOpenApi() {
+            if (!cachedSpec) {
+                alert('Please parse a spec first.');
+                return;
+            }
+
+            const operationId = document.getElementById('openapiOperationSelect').value;
+            if (!operationId) {
+                alert('Please select an operation.');
+                return;
+            }
+
+            const direction = document.querySelector('input[name="openapiDirection"]:checked').value;
+            const count = parseInt(document.getElementById('openapiCount').value) || 10;
+
+            try {
+                const response = await fetch('/api/openapi/schema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spec: cachedSpec,
+                        operationId: operationId,
+                        direction: direction,
+                        count: count
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    alert('Schema extraction error: ' + (data.error || 'Unknown error'));
+                    return;
+                }
+
+                // Put the schema in the Generator input and switch to Generator tab
+                document.getElementById('input').value = JSON.stringify(data, null, 2);
+                switchTab('generator');
+                alert('Schema generated! Review the Input Schema and click "Generate Data".');
+            } catch (e) {
+                alert('Failed to extract schema: ' + e.message);
+            }
+        }
+
+        function loadOpenApiFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('openapiSpec').value = e.target.result;
+            };
+            reader.readAsText(file);
+            // Reset file input so same file can be re-selected
+            event.target.value = '';
+        }
+
+        function clearOpenApi() {
+            document.getElementById('openapiSpec').value = '';
+            document.getElementById('openapiResult').style.display = 'none';
+            document.getElementById('openapiOperationSelect').innerHTML = '';
+            cachedSpec = null;
         }
 
         // Load default template on page load

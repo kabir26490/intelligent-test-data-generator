@@ -110,6 +110,12 @@ public class DataTypeGenerator {
             case "literal": {
                 return def.get("value");
             }
+            case "enum": {
+                @SuppressWarnings("unchecked")
+                List<String> values = (List<String>) def.get("values");
+                if (values == null || values.isEmpty()) return null;
+                return values.get(random.nextInt(values.size()));
+            }
             case "uuid":
                 return UUID.randomUUID().toString();
             default:
