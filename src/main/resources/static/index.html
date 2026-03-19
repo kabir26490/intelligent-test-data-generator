@@ -157,6 +157,119 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.show { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+        }
+        
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            color: #667eea;
+        }
+        
+        .modal-section {
+            margin-bottom: 25px;
+        }
+        
+        .modal-section h3 {
+            color: #667eea;
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-section ul {
+            margin-left: 20px;
+        }
+        
+        .modal-section li {
+            margin: 8px 0;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .about-btn {
+            margin-left: auto;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .about-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .header-info {
+            flex: 1;
+        }
+        
         .schema-example {
             background: #f9fafb;
             border: 1px solid #e5e7eb;
@@ -186,8 +299,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎲 Intelligent Test Data Generator</h1>
-            <p>QA-aware test data with business rules validation and edge case generation</p>
+            <div class="header-top">
+                <div class="header-info">
+                    <h1>🎲 Intelligent Test Data Generator</h1>
+                    <p>QA-aware test data with business rules validation and edge case generation</p>
+                </div>
+                <button class="about-btn" onclick="openAbout()">ℹ️ About</button>
+            </div>
         </header>
 
         <!-- Info Cards -->
@@ -393,7 +511,128 @@
         </div>
     </div>
 
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📖 About This Tool</h2>
+                <button class="modal-close" onclick="closeAbout()">&times;</button>
+            </div>
+
+            <div class="modal-section">
+                <h3>What is it?</h3>
+                <p>The Intelligent Test Data Generator is a Spring Boot application that creates realistic, business-rule-validated test data for QA, development, and performance testing. It supports complex schemas, nested arrays, computed fields, and automatic edge case generation.</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>✅ Key Capabilities</h3>
+                <ul>
+                    <li><strong>Generate 1-100,000 records</strong> with realistic data</li>
+                    <li><strong>Complex nested schemas</strong> with arrays and objects</li>
+                    <li><strong>Business rule expressions</strong>: arithmetic, conditionals, array aggregation</li>
+                    <li><strong>Automatic edge case generation</strong> for QA testing (min/max/boundary values)</li>
+                    <li><strong>Reproducible data</strong> using seed values</li>
+                    <li><strong>50+ data types</strong>: names, emails, phones, UUIDs, products, companies</li>
+                    <li><strong>QA metadata tracking</strong> on every generated record</li>
+                    <li><strong>JSON output</strong> ready for API testing and database imports</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>⚠️ Known Limitations</h3>
+                <ul>
+                    <li>No custom Faker generation logic (built-in types only)</li>
+                    <li>Basic expression language (no nested functions)</li>
+                    <li>No relational constraints between records</li>
+                    <li>No regex pattern matching for data generation</li>
+                    <li>No direct database integration (JSON output only)</li>
+                    <li>No asynchronous/streaming (all data generated synchronously)</li>
+                    <li>No scheduling capability for recurring generation</li>
+                    <li>Single locale (hardcoded to en_US)</li>
+                    <li>Limited edge case types (4 predefined)</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>🎯 Use Cases</h3>
+                <ul>
+                    <li><strong>QA Testing:</strong> Generate diverse test datasets with business rule validation and edge cases</li>
+                    <li><strong>Development:</strong> Pre-populate dev databases, create API mock payloads, test nested structures</li>
+                    <li><strong>Load Testing:</strong> Generate 10K-100K consistent records to benchmark database and API performance</li>
+                    <li><strong>API Documentation:</strong> Create realistic example payloads for API docs</li>
+                    <li><strong>Migration Testing:</strong> Generate test data that matches production patterns</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>🚀 Quick Start</h3>
+                <ul>
+                    <li><strong>Web UI:</strong> Open <code>http://localhost:8080</code> after starting the app</li>
+                    <li><strong>Select a template</strong> (Simple Order, Complex Order, Users, Products) or paste your schema</li>
+                    <li><strong>Click Generate</strong> to create test data</li>
+                    <li><strong>Download or copy</strong> the JSON output</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>📝 Schema Example</h3>
+                <p><code style="background: #f3f4f6; padding: 8px; border-radius: 4px; display: block; margin-top: 10px; font-size: 0.9em; overflow-x: auto;">
+                    {"count": 10, "schema": {"id": "uuid", "name": "fullName", "email": "email", "amount": {"type": "decimal", "min": 10, "max": 100, "decimals": 2}}}
+                </code></p>
+            </div>
+
+            <div class="modal-section">
+                <h3>💻 Technology Stack</h3>
+                <ul>
+                    <li>Spring Boot 3.2.0 (Java 17+)</li>
+                    <li>JavaFaker for realistic data generation</li>
+                    <li>Jakarta Bean Validation</li>
+                    <li>Custom Business Rule Engine</li>
+                    <li>Docker & Docker Compose</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>📚 Documentation</h3>
+                <ul>
+                    <li><strong>API Endpoint:</strong> POST <code>/api/generate</code></li>
+                    <li><strong>Health Check:</strong> GET <code>/api/health</code></li>
+                    <li><strong>GitHub:</strong> <a href="https://github.com/kabir26490/intelligent-test-data-generator" target="_blank">kabir26490/intelligent-test-data-generator</a></li>
+                    <li><strong>Version:</strong> 1.0.0</li>
+                </ul>
+            </div>
+
+            <div class="modal-section" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 6px; margin-top: 20px;">
+                <p style="color: #1e40af; margin: 0;"><strong>💡 Pro Tip:</strong> Use the "Expressions" tab in the Generator to learn about business rule syntax (arithmetic, conditionals, array aggregation).</p>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // About Modal Functions
+        function openAbout() {
+            document.getElementById('aboutModal').classList.add('show');
+        }
+
+        function closeAbout() {
+            document.getElementById('aboutModal').classList.remove('show');
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('aboutModal');
+            if (event.target === modal) {
+                closeAbout();
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAbout();
+            }
+        });
+
         // Templates
         const templates = {
             simple: {
