@@ -34,6 +34,17 @@ public class DataTypeGenerator {
             case "uuid":         return UUID.randomUUID().toString();
             case "productname":  return faker.commerce().productName();
             case "companyname":  return faker.company().name();
+            case "sentence":     return faker.lorem().sentence();
+            case "datetime": {
+                long epochNow = System.currentTimeMillis() / 1000;
+                long offset = (long) ((random.nextDouble() * 2.0 - 1.0) * 365L * 24 * 3600);
+                return java.time.Instant.ofEpochSecond(epochNow + offset).toString();
+            }
+            case "date": {
+                long epochNow = System.currentTimeMillis() / 1000;
+                long offset = (long) ((random.nextDouble() * 2.0 - 1.0) * 365L * 24 * 3600);
+                return java.time.Instant.ofEpochSecond(epochNow + offset).toString().substring(0, 10);
+            }
             default:             return null;
         }
     }
@@ -70,6 +81,34 @@ public class DataTypeGenerator {
                     result.add(item);
                 }
                 return result;
+            }
+            case "object": {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> objSchema = (Map<String, Object>) def.get("schema");
+                if (objSchema == null) return new LinkedHashMap<>();
+                Map<String, Object> obj = new LinkedHashMap<>();
+                for (Map.Entry<String, Object> entry : objSchema.entrySet()) {
+                    obj.put(entry.getKey(), generateValue(entry.getKey(), entry.getValue(), locale, obj));
+                }
+                return obj;
+            }
+            case "datetime": {
+                long epochNow = System.currentTimeMillis() / 1000;
+                long offset = (long) ((random.nextDouble() * 2.0 - 1.0) * 365L * 24 * 3600);
+                java.time.Instant instant = java.time.Instant.ofEpochSecond(epochNow + offset);
+                return instant.toString();
+            }
+            case "date": {
+                long epochNow = System.currentTimeMillis() / 1000;
+                long offset = (long) ((random.nextDouble() * 2.0 - 1.0) * 365L * 24 * 3600);
+                java.time.Instant instant = java.time.Instant.ofEpochSecond(epochNow + offset);
+                return instant.toString().substring(0, 10);
+            }
+            case "boolean": {
+                return random.nextBoolean();
+            }
+            case "literal": {
+                return def.get("value");
             }
             case "uuid":
                 return UUID.randomUUID().toString();

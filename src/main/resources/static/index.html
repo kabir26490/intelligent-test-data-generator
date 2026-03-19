@@ -848,25 +848,21 @@
 
         function inferFieldDefinition(value, fieldName, warnings, path) {
             if (value === null || value === undefined) {
-                warnings.push(`Field ${path} is null/undefined in sample; using generic text generator.`);
-                return 'companyname';
+                warnings.push(`Field "${path}" is null in sample — will generate null. Update the type if needed.`);
+                return { type: 'literal', value: null };
             }
 
             if (Array.isArray(value)) {
                 const itemSample = value.find(item => item !== null && item !== undefined);
                 if (itemSample === undefined) {
-                    warnings.push(`Array ${path} is empty in sample; using placeholder item schema.`);
-                    return {
-                        type: 'array',
-                        minItems: 0,
-                        maxItems: 0,
-                        schema: { value: 'companyname' }
-                    };
+                    warnings.push(`Array "${path}" is empty in sample; using placeholder item schema.`);
+                    return { type: 'array', minItems: 0, maxItems: 0, schema: { value: 'companyname' } };
                 }
 
                 if (typeof itemSample === 'object' && !Array.isArray(itemSample)) {
                     const itemSchema = {};
                     for (const [k, v] of Object.entries(itemSample)) {
+                        if (k === '_qa_metadata') continue;
                         itemSchema[k] = inferFieldDefinition(v, k, warnings, `${path}[].${k}`);
                     }
                     return {
@@ -881,9 +877,7 @@
                     type: 'array',
                     minItems: value.length || 1,
                     maxItems: value.length || 1,
-                    schema: {
-                        value: inferFieldDefinition(itemSample, 'value', warnings, `${path}[].value`)
-                    }
+                    schema: { value: inferFieldDefinition(itemSample, 'value', warnings, `${path}[].value`) }
                 };
             }
 
@@ -900,26 +894,40 @@
             }
 
             if (typeof value === 'boolean') {
-                warnings.push(`Boolean field ${path} is not directly supported by current generator types; using numeric approximation.`);
-                return { type: 'number', min: 0, max: 1 };
+                return { type: 'boolean' };
             }
 
-            // Nested object fields are not directly supported as standalone type definitions in this version.
-            warnings.push(`Nested object ${path} is not directly supported; using UUID placeholder.`);
-            return 'uuid';
+            // Nested plain object — recurse into sub-schema
+            const nestedSchema = {};
+            for (const [k, v] of Object.entries(value)) {
+                if (k === '_qa_metadata') continue;
+                nestedSchema[k] = inferFieldDefinition(v, k, warnings, `${path}.${k}`);
+            }
+            return { type: 'object', schema: nestedSchema };
         }
 
         function inferStringType(value, fieldName) {
             const key = fieldName.toLowerCase();
 
+            // Value pattern detection (highest priority)
             if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) return 'uuid';
             if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'email';
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) return 'datetime';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'date';
             if (/^[+()\-\s0-9]{7,}$/.test(value)) return 'phone';
+
+            // Field name detection
             if (key.includes('firstname') || key.includes('first_name')) return 'firstname';
             if (key.includes('lastname') || key.includes('last_name')) return 'lastname';
+            if (key.includes('email')) return 'email';
+            if (key.includes('phone') || key.includes('mobile') || key.includes('tel')) return 'phone';
+            if (key.includes('description') || key.includes('note') || key.includes('comment') || key.includes('message')) return 'sentence';
             if (key.includes('name')) return 'fullName';
             if (key.includes('company') || key.includes('org')) return 'companyname';
             if (key.includes('product') || key.includes('item')) return 'productname';
+            if (key.includes('href') || key.includes('url') || key.includes('link')) return 'uuid';
+            if (key.includes('date') || key.includes('time')) return 'datetime';
+            if (key.includes('id')) return 'uuid';
 
             return 'companyname';
         }
