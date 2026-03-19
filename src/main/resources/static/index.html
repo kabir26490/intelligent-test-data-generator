@@ -760,6 +760,15 @@
                         <div class="controls" style="margin-top: 12px;">
                             <button class="btn-primary" onclick="generateSchemaFromOpenApi()">🚀 Generate Schema</button>
                         </div>
+
+                        <div id="coverage-trigger" style="display:none; margin-top: 16px;">
+                            <button id="btn-full-coverage" class="btn-secondary" onclick="generateFullCoverage()">
+                                ✦ Generate Full Coverage
+                            </button>
+                            <span style="margin-left: 12px; font-size: 13px; color: #6b7280;">
+                                AI identifies all test scenarios for this API automatically
+                            </span>
+                        </div>
                     </div>
 
                     <div class="info-box" style="margin-top: 12px;">
@@ -828,6 +837,33 @@
                 <div class="controls">
                     <button class="btn-secondary" onclick="copyToClipboard('output')">Copy Output</button>
                     <button class="btn-secondary" onclick="downloadJSON()">Download JSON</button>
+                </div>
+
+                <!-- AutoCoverage Report Panel -->
+                <div id="coverage-panel" style="display:none; margin-top: 24px;">
+                    <h3 style="color: #7c3aed; margin-bottom: 16px;">✦ AutoCoverage Report</h3>
+
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                        <div>
+                            <div style="font-size:13px; color:#6b7280;">Coverage score</div>
+                            <div id="coverage-score" style="font-size:36px; font-weight:600; color:#7c3aed;">—</div>
+                        </div>
+                        <div style="flex:1;">
+                            <div id="coverage-bar-bg" style="background:#e5e7eb; border-radius:4px; height:8px;">
+                                <div id="coverage-bar" style="background:#7c3aed; border-radius:4px; height:8px; width:0%; transition:width 0.6s;"></div>
+                            </div>
+                            <div id="coverage-summary" style="font-size:13px; color:#6b7280; margin-top:4px;"></div>
+                        </div>
+                    </div>
+
+                    <div id="scenario-list"></div>
+
+                    <div id="gaps-section" style="display:none; margin-top:20px;">
+                        <div style="font-size:14px; font-weight:500; color:#b45309; margin-bottom:8px;">
+                            ⚠ Scenarios you are missing coverage for:
+                        </div>
+                        <ul id="gaps-list" style="margin:0; padding-left:20px; font-size:13px; color:#92400e;"></ul>
+                    </div>
                 </div>
 
                 <div style="margin-top: 20px;">
@@ -1354,6 +1390,8 @@
 
         // ===== OpenAPI Import Functions =====
         let cachedSpec = null; // cache parsed spec content to avoid re-sending for schema extraction
+        let lastParsedSpecRaw = '';
+        let lastApiTitle = '';
 
         async function parseOpenApiSpec() {
             const specText = document.getElementById('openapiSpec').value.trim();
@@ -1382,6 +1420,10 @@
 
                 cachedSpec = specText;
 
+                // Store for AutoCoverage
+                lastParsedSpecRaw = specText;
+                lastApiTitle = data.title || 'Parsed API';
+
                 // Show result panel
                 const resultDiv = document.getElementById('openapiResult');
                 resultDiv.style.display = 'block';
@@ -1408,6 +1450,9 @@
                     opt.dataset.hasResponse = op.hasResponseBody;
                     select.appendChild(opt);
                 });
+
+                // Show AutoCoverage button
+                document.getElementById('coverage-trigger').style.display = 'block';
             } catch (e) {
                 alert('Failed to parse spec: ' + e.message);
             } finally {
@@ -1475,7 +1520,108 @@
             document.getElementById('openapiSpec').value = '';
             document.getElementById('openapiResult').style.display = 'none';
             document.getElementById('openapiOperationSelect').innerHTML = '';
+            document.getElementById('coverage-trigger').style.display = 'none';
+            document.getElementById('coverage-panel').style.display = 'none';
             cachedSpec = null;
+            lastParsedSpecRaw = '';
+            lastApiTitle = '';
+        }
+
+        // ===== AutoCoverage Functions =====
+
+        function generateFullCoverage() {
+            const btn = document.getElementById('btn-full-coverage');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analysing spec...';
+            document.getElementById('coverage-panel').style.display = 'none';
+
+            fetch('/api/coverage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    parsedSpec: lastParsedSpecRaw,
+                    apiTitle: lastApiTitle,
+                    recordsPerScenario: 3
+                })
+            })
+            .then(r => r.json())
+            .then(report => {
+                renderCoverageReport(report);
+                btn.disabled = false;
+                btn.textContent = '✦ Generate Full Coverage';
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = '✦ Generate Full Coverage';
+                alert('Coverage generation failed. Check console.');
+            });
+        }
+
+        function renderCoverageReport(report) {
+            document.getElementById('coverage-score').textContent = report.coverageScore + '%';
+            document.getElementById('coverage-bar').style.width = report.coverageScore + '%';
+            document.getElementById('coverage-summary').textContent =
+                report.totalScenariosGenerated + ' of ' + report.totalScenariosIdentified +
+                ' scenarios generated · ' + report.apiTitle;
+
+            const catColor = { happy_path: '#059669', edge_case: '#d97706', negative: '#dc2626' };
+            const catLabel = { happy_path: 'Happy path', edge_case: 'Edge case', negative: 'Negative' };
+
+            const list = document.getElementById('scenario-list');
+            list.innerHTML = '';
+
+            (report.scenarios || []).forEach((s, i) => {
+                const color = catColor[s.category] || '#6b7280';
+                const label = catLabel[s.category] || s.category;
+                const card = document.createElement('div');
+                card.style.cssText = 'border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; margin-bottom:10px;';
+                card.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                        <span style="background:${color}18; color:${color}; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:500;">${label}</span>
+                        <span style="font-size:14px; font-weight:500;">${s.name}</span>
+                        <span style="margin-left:auto; font-size:12px; color:#9ca3af;">${s.tmfRule}</span>
+                    </div>
+                    <div style="font-size:13px; color:#6b7280; margin-bottom:8px;">${s.businessDescription}</div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="viewScenarioData(${i})" style="font-size:12px; padding:4px 10px; border:1px solid #e5e7eb; border-radius:4px; background:white; cursor:pointer;">
+                            View data (${(s.generatedData || []).length} records)
+                        </button>
+                        <button onclick="copyScenarioData(${i})" style="font-size:12px; padding:4px 10px; border:1px solid #e5e7eb; border-radius:4px; background:white; cursor:pointer;">
+                            Copy JSON
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            const gapsSection = document.getElementById('gaps-section');
+            const gapsList = document.getElementById('gaps-list');
+            if (report.gaps && report.gaps.length > 0) {
+                gapsList.innerHTML = report.gaps.map(g => `<li style="margin-bottom:4px;">${g}</li>`).join('');
+                gapsSection.style.display = 'block';
+            } else {
+                gapsSection.style.display = 'none';
+            }
+
+            document.getElementById('coverage-panel').style.display = 'block';
+            document.getElementById('coverage-panel').scrollIntoView({ behavior: 'smooth' });
+
+            window._coverageScenarios = report.scenarios;
+        }
+
+        function viewScenarioData(index) {
+            const scenario = window._coverageScenarios[index];
+            const outputEl = document.getElementById('output');
+            if (outputEl) {
+                outputEl.value = JSON.stringify(scenario.generatedData, null, 2);
+                outputEl.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function copyScenarioData(index) {
+            const scenario = window._coverageScenarios[index];
+            navigator.clipboard.writeText(JSON.stringify(scenario.generatedData, null, 2))
+                .then(() => alert('Copied to clipboard'));
         }
 
         // Load default template on page load
