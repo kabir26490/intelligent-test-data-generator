@@ -4,6 +4,7 @@
 
 ## 📋 Table of Contents
 - [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
 - [Features](#features)
 - [Capabilities](#capabilities)
 - [Limitations](#limitations)
@@ -29,6 +30,93 @@ Then open **http://localhost:8080** in your browser
 docker-compose up --build
 ```
 Access at **http://localhost:8080**
+
+---
+
+## 🗺️ How It Works
+
+There are **two ways** to generate test data. Choose the path that fits your situation:
+
+---
+
+### Path A — Import from an OpenAPI / Swagger Spec
+*Best if you already have an API spec file.*
+
+| Step | Action | Notes |
+|------|--------|-------|
+| **1** | Open the app → click **"OpenAPI Import"** tab | Located next to the Generator tab |
+| **2** | **Paste** your OpenAPI spec (YAML or JSON) **or click "Upload File"** | Supports OpenAPI 3.0 and 3.1 |
+| **3** | Click **"Parse Spec"** | All `$ref` references are resolved automatically. A dropdown of operations appears. |
+| **4** | **Select the operation** from the dropdown | e.g. `POST /productOrder – createProductOrder` |
+| **5** | Choose **direction**: Request Body or Response Body | Then set the number of records to generate |
+| **6** | Click **"Generate Schema"** | The OpenAPI schema is converted to generator format and the Generator tab opens automatically |
+| **7** | Click **"🚀 Generate Data"** | Realistic test data is created matching your API's schema |
+| **8** | **Copy or Download** the JSON output | Ready for Postman, Cucumber, JMeter, or any test tool |
+
+**Example — TMF Product Ordering API:**
+```
+Spec pasted → Parse → Select "retrieveProductOrder" → Response → Count: 5 → Generate Schema → Generate Data
+```
+Output will include: UUIDs, datetime fields, enum values (state, action), nested arrays (relatedParty, productOrderItem), deeply nested objects (productSpecification).
+
+---
+
+### Path B — Build or Derive a Schema Manually
+*Best if you have no spec file, or want full control over the schema.*
+
+| Step | Action | Notes |
+|------|--------|-------|
+| **1** | Open the app → use the **"Generator"** tab | This is the default tab |
+| **2** | **Load a template** (Simple Order, Complex Order, Users, Products) | Or clear and write your own schema from scratch |
+| **3** | *(Optional)* **Paste a sample API response** in the "Sample Response" box | Any real JSON response from your system works |
+| **4** | Click **"Sample → Schema"** | Field types are inferred from values and field names automatically |
+| **5** | **Edit the schema** as needed | Add `computedFields`, `qaMode`, `seed` — see Schema Definition section |
+| **6** | Click **"🚀 Generate Data"** | Output appears in the right panel |
+| **7** | **Copy or Download** the JSON output | Use "Output → Schema" to refine the schema from the generated results |
+
+**Example — User Batch:**
+```json
+{
+  "count": 20,
+  "schema": {
+    "id": "uuid",
+    "name": "fullName",
+    "email": "email",
+    "age": {"type": "number", "min": 18, "max": 65}
+  }
+}
+```
+
+---
+
+### Both Paths — Optional Enhancements
+
+Once you have a schema in the Generator tab, you can enrich it:
+
+- **Add computed fields** (business rules):
+  ```json
+  "computedFields": {
+    "tax": "price * 0.08",
+    "shipping": "if(total > 100, 0, 15)",
+    "order_total": "sum(items[].price * items[].quantity)"
+  }
+  ```
+
+- **Enable edge case generation** (QA mode):
+  ```json
+  "qaMode": {
+    "edgeCases": true,
+    "edgeCaseRatio": 0.2,
+    "include": ["minimum", "maximum", "boundary_minus", "boundary_plus"]
+  }
+  ```
+
+- **Reproducible data** (seed):
+  ```json
+  "seed": 12345
+  ```
+
+---
 
 ## ✨ Features
 - **Business Rule Validation**: sum(), if/else, arithmetic expressions
