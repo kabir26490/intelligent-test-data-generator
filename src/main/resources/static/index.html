@@ -60,6 +60,11 @@
             font-size: 12px;
             resize: vertical;
         }
+
+        .compact-textarea {
+            min-height: 180px;
+            margin-top: 10px;
+        }
         
         button { 
             padding: 12px 24px; 
@@ -377,9 +382,17 @@
                         <button class="btn-secondary" onclick="formatJSON('input')">Format</button>
                         <button class="btn-secondary" onclick="convertResponseToSchema()">Output -> Schema</button>
                     </div>
+
+                    <label style="display:block; margin-top: 16px;"><strong>Sample Response JSON (paste external response):</strong></label>
+                    <textarea id="sampleResponse" class="compact-textarea" placeholder='Paste a sample response JSON object/array here to derive a schema...'></textarea>
+                    <div class="controls">
+                        <button class="btn-secondary" onclick="convertSampleToSchema()">Sample -> Schema</button>
+                        <button class="btn-secondary" onclick="copyToClipboard('sampleResponse')">Copy Sample</button>
+                        <button class="btn-secondary" onclick="formatJSON('sampleResponse')">Format Sample</button>
+                    </div>
                     
                     <div class="info-box">
-                        💡 <strong>Tip:</strong> Select a template above or paste your own JSON schema. You can also generate data once, then click <strong>Output -> Schema</strong> to derive a starter schema from sample response JSON.
+                        💡 <strong>Tip:</strong> Use <strong>Output -> Schema</strong> to derive schema from generated output, or use <strong>Sample -> Schema</strong> to derive schema from any external sample response.
                     </div>
                 </div>
 
@@ -748,6 +761,7 @@
         function clearInputOutput() {
             document.getElementById('input').value = '';
             document.getElementById('output').value = '';
+            document.getElementById('sampleResponse').value = '';
             document.getElementById('input').style.color = 'black';
             document.getElementById('output').style.color = 'black';
         }
@@ -770,8 +784,22 @@
                 return;
             }
 
+            convertJsonToSchema(outputText, 'generated output');
+        }
+
+        function convertSampleToSchema() {
+            const sampleText = document.getElementById('sampleResponse').value.trim();
+            if (!sampleText) {
+                alert('Please paste sample response JSON first.');
+                return;
+            }
+
+            convertJsonToSchema(sampleText, 'sample response');
+        }
+
+        function convertJsonToSchema(rawJson, sourceLabel) {
             try {
-                const sample = JSON.parse(outputText);
+                const sample = JSON.parse(rawJson);
                 const conversion = buildSchemaFromSample(sample);
                 document.getElementById('input').value = JSON.stringify(conversion.requestPayload, null, 2);
                 formatJSON('input');
@@ -779,10 +807,10 @@
                 if (conversion.warnings.length > 0) {
                     alert('Schema generated with notes:\n- ' + conversion.warnings.join('\n- ') + '\n\nPlease review and adjust manually where needed.');
                 } else {
-                    alert('Schema generated successfully from output sample.');
+                    alert('Schema generated successfully from ' + sourceLabel + '.');
                 }
             } catch (e) {
-                alert('Unable to convert output to schema: ' + e.message);
+                alert('Unable to convert ' + sourceLabel + ' to schema: ' + e.message);
             }
         }
 
