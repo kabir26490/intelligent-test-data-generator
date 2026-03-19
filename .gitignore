@@ -1,0 +1,39 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+
+# Logs
+*.log
+
+# Secret / local config overrides — NEVER commit these
+application-secret.properties
+application-local.properties
+application-prod.properties
+*.env
+.env
+.env.*
+secrets.yml
+secrets.yaml
