@@ -92,37 +92,151 @@
 
     <section id="how" class="section container">
       <div class="section-head">
-        <h2>How It Works</h2>
+        <h2>How To Use This Tool</h2>
+        <p class="workflow-intro">Two paths to generate test data — choose the one that fits your situation.</p>
       </div>
-      <div class="timeline">
-        <div class="step">
-          <span>01</span>
-          <div>
-            <h3>Define the schema</h3>
-            <p>Describe each field as a simple faker type or a complex typed definition with constraints.</p>
+
+      <div class="workflow-paths">
+
+        <!-- Path A: OpenAPI Import -->
+        <div class="workflow-path path-openapi">
+          <p class="workflow-path-title">📄 Path A — Import from OpenAPI / Swagger Spec</p>
+          <p class="workflow-path-subtitle">Already have an API spec file? Start here. All $ref references are resolved automatically.</p>
+          <ol class="wf-steps">
+            <li class="wf-step">
+              <span class="wf-num">1</span>
+              <span class="wf-body">
+                <strong>Open the app → click "OpenAPI Import" tab</strong>
+                <span class="wf-note">Available at <a href="http://localhost:8080" target="_blank" rel="noreferrer">localhost:8080</a> after starting the app.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">2</span>
+              <span class="wf-body">
+                <strong>Paste or upload your spec</strong>
+                <span class="wf-note">Supports OpenAPI 3.0 / 3.1 in YAML or JSON format.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">3</span>
+              <span class="wf-body">
+                <strong>Click "Parse Spec"</strong>
+                <span class="wf-note">All operations are listed in a dropdown. $ref resolution is automatic.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">4</span>
+              <span class="wf-body">
+                <strong>Select the operation</strong>
+                <span class="wf-note">e.g. POST /productOrder – createProductOrder</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">5</span>
+              <span class="wf-body">
+                <strong>Choose direction &amp; count</strong>
+                <span class="wf-note">Request Body or Response Body. Set how many records to generate.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">6</span>
+              <span class="wf-body">
+                <strong>Click "Generate Schema"</strong>
+                <span class="wf-note">OpenAPI schema is converted to generator format automatically.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">7</span>
+              <span class="wf-body">
+                <strong>Click "Generate Data" in the Generator tab</strong>
+                <span class="wf-note">Realistic test data is created matching your API's schema.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">8</span>
+              <span class="wf-body">
+                <strong>Copy or Download the JSON output</strong>
+                <span class="wf-note">Ready for Postman, Cucumber, JMeter, or any test tool.</span>
+              </span>
+            </li>
+          </ol>
+
+          <!-- Mini hint bar -->
+          <div class="mini-flow">
+            <div class="mf-step"><div class="mf-num">1</div><div class="mf-icon">📋</div><div class="mf-label">Paste Spec</div><div class="mf-sub">YAML / JSON</div></div>
+            <div class="mf-step"><div class="mf-num">2</div><div class="mf-icon">🔍</div><div class="mf-label">Parse</div><div class="mf-sub">Resolves $refs</div></div>
+            <div class="mf-step"><div class="mf-num">3</div><div class="mf-icon">🎯</div><div class="mf-label">Select Op</div><div class="mf-sub">+ direction</div></div>
+            <div class="mf-step"><div class="mf-num">4</div><div class="mf-icon">⚙️</div><div class="mf-label">Gen Schema</div><div class="mf-sub">Auto-fill</div></div>
+            <div class="mf-step"><div class="mf-num">5</div><div class="mf-icon">🚀</div><div class="mf-label">Gen Data</div><div class="mf-sub">Generator tab</div></div>
+            <div class="mf-step"><div class="mf-num">6</div><div class="mf-icon">📥</div><div class="mf-label">Download</div><div class="mf-sub">JSON output</div></div>
           </div>
         </div>
-        <div class="step">
-          <span>02</span>
-          <div>
-            <h3>Add computed fields</h3>
-            <p>Layer in business-rule expressions for taxes, discounts, shipping, and order-level rollups.</p>
-          </div>
+
+        <!-- OR divider -->
+        <div class="workflow-or">
+          <div class="or-pill">OR</div>
         </div>
-        <div class="step">
-          <span>03</span>
-          <div>
-            <h3>Enable QA mode</h3>
-            <p>Set edge case ratio and include types to stress your APIs with boundary-aware payloads.</p>
-          </div>
+
+        <!-- Path B: Manual -->
+        <div class="workflow-path path-manual">
+          <p class="workflow-path-title">✏️ Path B — Write or Derive Schema Manually</p>
+          <p class="workflow-path-subtitle">No spec file? Build from scratch or infer from a sample API response.</p>
+          <ol class="wf-steps">
+            <li class="wf-step">
+              <span class="wf-num">1</span>
+              <span class="wf-body">
+                <strong>Open the app → use the "Generator" tab</strong>
+                <span class="wf-note">This is the default active tab when you open the tool.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">2</span>
+              <span class="wf-body">
+                <strong>Load a template or write your schema</strong>
+                <span class="wf-note">Pick from Simple Order, Complex Order, Users, or Products.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">3</span>
+              <span class="wf-body">
+                <strong>— OR — paste a sample API response</strong>
+                <span class="wf-note">Paste any real JSON response into the "Sample Response" box.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">4</span>
+              <span class="wf-body">
+                <strong>Click "Sample → Schema"</strong>
+                <span class="wf-note">Field types are inferred from values and field names automatically.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">5</span>
+              <span class="wf-body">
+                <strong>Add business rules &amp; edge cases (optional)</strong>
+                <span class="wf-note">Use <code>computedFields</code>, <code>qaMode</code>, and <code>seed</code> for richer datasets.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">6</span>
+              <span class="wf-body">
+                <strong>Click "Generate Data"</strong>
+                <span class="wf-note">A JSON array of records appears in the output panel.</span>
+              </span>
+            </li>
+            <li class="wf-step">
+              <span class="wf-num">7</span>
+              <span class="wf-body">
+                <strong>Copy or Download the output</strong>
+                <span class="wf-note">Use "Output → Schema" to refine the schema from results.</span>
+              </span>
+            </li>
+          </ol>
         </div>
-        <div class="step">
-          <span>04</span>
-          <div>
-            <h3>Generate and validate</h3>
-            <p>Consume JSON output with embedded metadata so your pipeline can separate normal and edge records.</p>
-          </div>
-        </div>
+      </div>
+
+      <div class="workflow-tip">
+        💡 <strong>Pro tip:</strong> Both paths converge at the Generator tab. Add <code>computedFields</code> for business rules (taxes, totals), enable <code>qaMode</code> for boundary edge cases, or set a <code>seed</code> to reproduce the exact same dataset every run.
       </div>
     </section>
 
@@ -153,22 +267,28 @@
 
     <section id="api" class="section container">
       <div class="section-head">
-        <h2>API & Local Run</h2>
+        <h2>API &amp; Local Run</h2>
       </div>
       <div class="grid grid-2">
         <article class="panel">
           <h3>Endpoints</h3>
           <p><code>POST /api/generate</code> — Generate records from schema payload.</p>
-          <p><code>GET /api/health</code> — Service health check.</p>
-          <h4>Local App URL</h4>
+          <p style="margin-top:8px"><code>POST /api/openapi/parse</code> — Parse an OpenAPI spec; returns list of operations.</p>
+          <p style="margin-top:8px"><code>POST /api/openapi/schema</code> — Extract &amp; convert schema for a specific operation.</p>
+          <p style="margin-top:8px"><code>GET /api/health</code> — Service health check.</p>
+          <h4 style="margin-top:16px">Local App URL</h4>
           <p><a href="http://localhost:8080" target="_blank" rel="noreferrer">http://localhost:8080</a></p>
         </article>
         <article class="panel">
           <h3>Quick Start</h3>
           <pre><code>mvn clean package
 java -jar target/intelligent-test-data-generator-1.0.0.jar</code></pre>
-          <h4>Docker</h4>
+          <h4 style="margin-top:16px">Docker</h4>
           <pre><code>docker-compose up --build</code></pre>
+          <h4 style="margin-top:16px">OpenAPI Parse Example</h4>
+          <pre><code>curl -X POST http://localhost:8080/api/openapi/parse \
+  -H "Content-Type: application/json" \
+  -d '{"spec": "&lt;yaml or json&gt;"}'</code></pre>
         </article>
       </div>
     </section>
