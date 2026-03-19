@@ -850,11 +850,8 @@
             if (value === null || value === undefined) {
                 // Try to infer type from field name before falling back to literal null
                 const guessed = inferTypeFromFieldName(fieldName);
-                if (guessed) {
-                    warnings.push(`Field "${path}" is null in sample — inferred as "${guessed}" from field name.`);
-                    return guessed;
-                }
-                warnings.push(`Field "${path}" is null in sample — will generate null. Update the type if needed.`);
+                if (guessed) return guessed;
+                warnings.push(`Field "${path}" is null — could not infer type from name. Defaulting to null; update manually if needed.`);
                 return { type: 'literal', value: null };
             }
 
